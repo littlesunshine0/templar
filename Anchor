@@ -1,0 +1,76 @@
+//
+//  
+// 
+//
+//  Created on 5/17/25.
+//
+
+
+import Foundation
+
+// MARK: - AnchorPoint Model
+struct AnchorPoint: Identifiable, Hashable {
+    let id = UUID()
+    let label: String
+    let range: NSRange
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        // Optionally include label, range.location, range.length for finer hashing
+    }
+
+    static func == (lhs: AnchorPoint, rhs: AnchorPoint) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+// MARK: - AnchorType Enum
+enum AnchorType: String, CaseIterable {
+    case addNewTemplate
+    case endNewTemplates
+    case scriptUtility
+    case embedSwiftLogic
+    case coreContent
+    case readme
+    // Expand as needed
+}
+
+// MARK: - AnchorMatch Model
+struct AnchorMatch: Identifiable, Hashable {
+    let id = UUID()
+    let type: AnchorType
+    let label: String
+    let range: NSRange
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    static func == (lhs: AnchorMatch, rhs: AnchorMatch) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+// MARK: - AnchorScanner Logic
+class AnchorScanner {
+    static func scanAnchors(in text: String) -> [AnchorMatch] {
+        let patterns: [(AnchorType, String, String)] = [
+            (.addNewTemplate, "Add New Templates Here", "// --- ADD DEFINITIONS FOR NEW TEMPLATES.*"),
+            (.endNewTemplates, "End New Templates Section", "// --- END OF SECTION FOR NEW TEMPLATE.*"),
+            (.scriptUtility, "Setup Script Utilities", "// --- Utility Functions for Setup Script ---.*"),
+            (.embedSwiftLogic, "Embed New Swift Logic", "// <<< ADD NEW EMBEDDED STRUCTS/CLASSES.*>>>.*"),
+            (.coreContent, "Core Script Content Start", "let factoryCoreScriptContent = #\"\"\""),
+            (.readme, "README Content Start", "let readmeContent = #\"\"\"")
+        ]
+        var results: [AnchorMatch] = []
+        for (type, label, pattern) in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern) {
+                let nsText = text as NSString
+                let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+                for match in matches {
+                    results.append(AnchorMatch(type: type, label: label, range: match.range))
+                }
+            }
+        }
+        return results
+    }
+}
